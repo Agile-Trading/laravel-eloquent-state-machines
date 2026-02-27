@@ -30,7 +30,7 @@ abstract class StateMachine
     {
         $field = $this->field;
 
-        return $this->model->$field;
+        return $this->normalizeCasting($this->model->$field);
     }
 
     public function history()
@@ -73,7 +73,9 @@ abstract class StateMachine
     {
         $availableTransitions = $this->transitions()[$from] ?? [];
 
-        return collect($availableTransitions)->contains($to);
+        return collect($availableTransitions)->map(function ($state) {
+            return $this->normalizeCasting($state);
+        })->contains($to);
     }
 
     public function pendingTransitions()
@@ -96,6 +98,9 @@ abstract class StateMachine
      */
     public function transitionTo($from, $to, $customProperties = [], $responsible = null)
     {
+        $from = $this->normalizeCasting($from);
+        $to = $this->normalizeCasting($to);
+
         if ($to === $this->currentState()) {
             return;
         }
@@ -150,6 +155,9 @@ abstract class StateMachine
      */
     public function postponeTransitionTo($from, $to, Carbon $when, $customProperties = [], $responsible = null) : ?PendingTransition
     {
+        $from = $this->normalizeCasting($from);
+        $to = $this->normalizeCasting($to);
+
         if ($to === $this->currentState()) {
             return null;
         }
@@ -193,5 +201,10 @@ abstract class StateMachine
 
     public function beforeTransitionHooks() : array {
         return [];
+    }
+
+    public function normalizeCasting($state)
+    {
+        return $state instanceof \UnitEnum ? $state->value : $state;
     }
 }
