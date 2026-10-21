@@ -20,10 +20,10 @@ trait HasStateMachines
 {
     public static function bootHasStateMachines()
     {
-        $model = new static();
+        $stateMachines = (new \ReflectionProperty(static::class, 'stateMachines'))->getDefaultValue() ?? [];
 
-        collect($model->stateMachines)
-            ->each(function ($_, $field) use ($model) {
+        collect($stateMachines)
+            ->each(function ($_, $field) {
                 MacroableModels::addMacro(static::class, $field, function () use ($field) {
                     $stateMachine = new $this->stateMachines[$field]($field, $this);
                     return new State($this->{$stateMachine->field}, $stateMachine);
